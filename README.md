@@ -47,6 +47,26 @@
 | 💬 | **Teams** | Peer inbox; `peer_invoke_mode` selects sync / async / both |
 | ⌨️ | **Terminal CLI** | Interactive chat, provider/skill config, and agent management |
 
+### Local command lifetime
+
+Local-shell and bubblewrap commands are cancelled with their awaiting tool task.
+On POSIX, timeout and cancellation terminate the command's process group, including
+shell-spawned children. On Windows, only the direct process is terminated.
+Hosts can share a deadline across local commands without patching backend methods:
+
+```python
+from octop_harness import execution_scope
+
+async with execution_scope(timeout_s=600):
+    async for chunk in manager.stream(agent_id, request):
+        ...
+```
+
+The scope limits command execution; the host still owns turn timeouts and progress
+messages. Remote sandboxes keep their own timeout/cancellation behavior.
+MCP argument models preserve native object/array arguments and also accept their
+JSON-encoded string representations.
+
 ## Why Octop Harness?
 
 octop-harness is a library (not an app) that turns deepagents into a deployable runtime. A single `HarnessAgentManager` owns a registry of agents; each agent wires together a model, a set of tools/skills, a memory backend, and a LangGraph checkpoint — all assembled through the `harness` layering discipline (L0 I/O helpers → L1 workspace facade → L2 business logic → L3 assembly).

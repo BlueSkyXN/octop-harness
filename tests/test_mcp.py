@@ -162,6 +162,31 @@ class TestAloadMcpToolPostprocess:
 
 
 class TestMcpArgsModel:
+    @pytest.mark.parametrize("stringified", [False, True])
+    def test_preserves_container_arguments(self, stringified: bool) -> None:
+        model = mcp_args_model(
+            "feishu_im",
+            {
+                "type": "object",
+                "required": ["args"],
+                "properties": {"args": {"type": "object"}, "items": {"type": "array"}},
+            },
+        )
+        values = {"args": {"message_id": "om_test"}, "items": [1, {"name": "file"}]}
+        if stringified:
+            import json
+
+            inputs = {key: json.dumps(value) for key, value in values.items()}
+        else:
+            inputs = values
+        assert model.model_validate(inputs).model_dump() == values
+        props = model.model_json_schema()["properties"]
+        assert props["args"]["type"] == "object"
+        assert props["items"]["type"] == "array"
+        assert "anyOf" not in props["items"]
+        with pytest.raises(ValidationError):
+            model.model_validate({"args": "not json"})
+
     def test_builds_required_fields(self) -> None:
         model = mcp_args_model(
             "docs_manage_search_file",

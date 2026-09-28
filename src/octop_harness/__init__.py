@@ -6,6 +6,7 @@ from importlib import import_module
 from typing import TYPE_CHECKING
 
 from octop_harness._version import __version__
+from octop_harness.backends.process import execution_scope
 from octop_harness.config import (
     HarnessAgentConfig,
     MediaGenerationConfig,
@@ -75,6 +76,7 @@ __all__ = [
     "__version__",
     "current_log_file",
     "default_log_dir",
+    "execution_scope",
     "init_workspace",
     "register_protocol",
     "resolve_protocol",

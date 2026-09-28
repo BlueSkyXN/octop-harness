@@ -31,6 +31,7 @@ from octop_harness.backends.local_shell import (
     present_host_paths_in_output,
     rewrite_virtual_paths_in_command,
 )
+from octop_harness.backends.process import run_process
 
 logger = logging.getLogger(__name__)
 
@@ -218,13 +219,9 @@ class BubbledLocalShellBackend(HarnessLocalShellBackend):
             extra_binds=self._skill_extra_binds(),
         )
         try:
-            result = subprocess.run(
+            result = run_process(
                 argv,
-                check=False,
                 shell=False,
-                capture_output=True,
-                stdin=subprocess.DEVNULL,
-                text=True,
                 timeout=effective_timeout,
                 env=self._env,
             )

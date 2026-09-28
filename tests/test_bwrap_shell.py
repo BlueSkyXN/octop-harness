@@ -199,7 +199,7 @@ def test_execute_uses_bwrap_on_linux(tmp_path: Path) -> None:
     fake.returncode = 0
     fake.stdout = "ok\n"
     fake.stderr = ""
-    with patch("octop_harness.backends.bwrap_shell.subprocess.run", return_value=fake) as run:
+    with patch("octop_harness.backends.bwrap_shell.run_process", return_value=fake) as run:
         result = backend.execute("echo ok")
     assert result.exit_code == 0
     assert "ok" in result.output
@@ -222,7 +222,7 @@ def test_execute_injects_process_env_and_workspace_dotenv(tmp_path: Path, monkey
     fake.returncode = 0
     fake.stdout = "ok\n"
     fake.stderr = ""
-    with patch("octop_harness.backends.bwrap_shell.subprocess.run", return_value=fake) as run:
+    with patch("octop_harness.backends.bwrap_shell.run_process", return_value=fake) as run:
         backend.execute("echo ok")
     env = run.call_args.kwargs["env"]
     assert env["FROM_ADMIN"] == "yes"
@@ -278,7 +278,7 @@ def test_execute_falls_back_when_bwrap_missing_binary(tmp_path: Path) -> None:
     )
     with (
         patch(
-            "octop_harness.backends.bwrap_shell.subprocess.run",
+            "octop_harness.backends.bwrap_shell.run_process",
             side_effect=FileNotFoundError("bwrap"),
         ),
         patch.object(
@@ -315,7 +315,7 @@ def test_bwrap_start_failure_executes_translated_host_command(tmp_path: Path) ->
             raise FileNotFoundError("bwrap")
         return cast(subprocess.CompletedProcess[str], real_run(command, **kwargs))
 
-    with patch("octop_harness.backends.bwrap_shell.subprocess.run", side_effect=fail_bwrap_only):
+    with patch("octop_harness.backends.bwrap_shell.run_process", side_effect=fail_bwrap_only):
         result = backend.execute("sh /.octop/workspaces/FALLBACK1/probe.sh")
     assert result.exit_code == 0
     assert "fallback-ok" in result.output

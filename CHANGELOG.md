@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- Preserve object/array MCP arguments, including JSON-encoded container inputs.
+- Keep protocol stream iteration and closure in one ContextVar context.
+- Cancel local-shell/bubblewrap process groups on POSIX and expose `execution_scope`
+  for host-owned turn deadlines; no runtime method replacement is required.
+
 ## [1.0.0] - 2026-09-24
 
 ### 新增

@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import asyncio
+import contextvars
 import threading
 from collections.abc import AsyncIterator
 from typing import Any
@@ -59,6 +60,29 @@ async def test_cancel_preempts_blocked_anext() -> None:
     await asyncio.wait_for(task, timeout=1.0)
 
     assert chunks == ["first"]
+
+
+@pytest.mark.asyncio
+async def test_protocol_context_survives_steps_and_early_close() -> None:
+    value: contextvars.ContextVar[str] = contextvars.ContextVar("protocol_scope", default="outer")
+    closed: list[str] = []
+
+    async def scoped_stream() -> AsyncIterator[str]:
+        token = value.set("inner")
+        try:
+            yield value.get()
+            yield value.get()
+        finally:
+            value.reset(token)
+            closed.append(value.get())
+
+    agent = _bare_agent()
+    stream = agent._iter_until_cancelled(scoped_stream(), asyncio.Event())
+    assert await anext(stream) == "inner"
+    assert await anext(stream) == "inner"
+    await stream.aclose()
+    assert closed == ["outer"]
+    assert value.get() == "outer"
 
 
 @pytest.mark.asyncio

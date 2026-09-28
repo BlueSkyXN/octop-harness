@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import asyncio
 import contextlib
+import contextvars
 import logging
 import threading
 import time
@@ -405,9 +406,12 @@ class HarnessAgent:
         next token.
         """
         it = source.__aiter__()
+        stream_context = contextvars.copy_context()
         try:
             while not cancel_event.is_set():
-                next_task: asyncio.Task[Any] = asyncio.create_task(cast("Coroutine[Any, Any, Any]", it.__anext__()))
+                next_task: asyncio.Task[Any] = asyncio.create_task(
+                    cast("Coroutine[Any, Any, Any]", it.__anext__()), context=stream_context
+                )
                 cancel_task = asyncio.create_task(cancel_event.wait())
                 try:
                     _done, _pending = await asyncio.wait(
@@ -446,8 +450,12 @@ class HarnessAgent:
         finally:
             close = getattr(it, "aclose", None)
             if close is not None:
-                with contextlib.suppress(Exception):
+
+                async def close_source() -> None:
                     await close()
+
+                with contextlib.suppress(Exception):
+                    await asyncio.create_task(close_source(), context=stream_context)
 
     async def call(
         self,

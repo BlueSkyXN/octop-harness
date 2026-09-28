@@ -5,13 +5,14 @@ from __future__ import annotations
 import asyncio
 import concurrent.futures
 import inspect
+import json
 import logging
 import re
 from collections.abc import Callable
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Annotated, Any
 
 from langchain_mcp_adapters.client import MultiServerMCPClient
-from pydantic import BaseModel, Field, GetJsonSchemaHandler, create_model, model_validator
+from pydantic import BaseModel, BeforeValidator, Field, GetJsonSchemaHandler, create_model, model_validator
 from pydantic_core import core_schema as pydantic_core_schema
 
 from octop_harness.backends.utils import DEFENSIVE_OP_ERRORS
@@ -130,6 +131,15 @@ class _McpArgsBase(BaseModel):
         return json_schema
 
 
+def _coerce_json_container(value: Any) -> Any:
+    if isinstance(value, str):
+        try:
+            return json.loads(value)
+        except json.JSONDecodeError:
+            return value
+    return value
+
+
 def mcp_args_model(tool_name: str, input_schema: dict[str, Any]) -> type[Any]:
     """Build a Pydantic args model from an MCP tool ``inputSchema``."""
     props = input_schema.get("properties") or {}
@@ -142,14 +152,13 @@ def mcp_args_model(tool_name: str, input_schema: dict[str, Any]) -> type[Any]:
     for key, spec in props.items():
         spec_dict: dict[str, Any] = spec if isinstance(spec, dict) else {}
         json_type = spec_dict.get("type")
-        if json_type == "integer":
-            py_type: Any = int
-        elif json_type == "number":
-            py_type = float
-        elif json_type == "boolean":
-            py_type = bool
-        else:
-            py_type = str
+        py_type: Any = {
+            "integer": int,
+            "number": float,
+            "boolean": bool,
+            "object": Annotated[dict[str, Any], BeforeValidator(_coerce_json_container)],
+            "array": Annotated[list[Any], BeforeValidator(_coerce_json_container)],
+        }.get(str(json_type), str)
         desc = spec_dict.get("description")
         field_name = _pydantic_field_name(str(key), used_names)
         if field_name != key:

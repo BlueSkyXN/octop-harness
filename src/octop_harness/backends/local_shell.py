@@ -19,6 +19,8 @@ from typing import Any
 from deepagents.backends import LocalShellBackend
 from deepagents.backends.protocol import ExecuteResponse
 
+from octop_harness.backends.process import aexecute as execute_async
+from octop_harness.backends.process import run_process
 from octop_harness.runtime_env import resolve_local_execute_env
 
 # Quoted absolute path, or bare absolute token (heuristic; not a full shell parser).
@@ -287,13 +289,9 @@ class HarnessLocalShellBackend(LocalShellBackend):
                 truncated=False,
             )
         try:
-            result = subprocess.run(
+            result = run_process(
                 command,
-                check=False,
                 shell=True,
-                capture_output=True,
-                stdin=subprocess.DEVNULL,
-                text=True,
                 timeout=effective_timeout,
                 env=self._env,
                 cwd=str(self._host_execute_cwd()),
@@ -315,6 +313,12 @@ class HarnessLocalShellBackend(LocalShellBackend):
                 exit_code=1,
                 truncated=False,
             )
+
+    async def aexecute(self, command: str, *, timeout: int | None = None) -> ExecuteResponse:
+        """Execute without leaving the local process running after cancellation."""
+        result = await execute_async(self, command, timeout=timeout)
+        assert isinstance(result, ExecuteResponse)
+        return result
 
     def execute(
         self,

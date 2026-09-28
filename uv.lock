@@ -1921,7 +1921,7 @@ wheels = [
 
 [[package]]
 name = "octop-harness"
-version = "0.9.9"
+version = "1.0.0"
 source = { editable = "." }
 dependencies = [
     { name = "deepagents" },
@@ -2052,12 +2052,12 @@ requires-dist = [
     { name = "langgraph", specifier = ">=1.0,<2.0" },
     { name = "langgraph-checkpoint-sqlite", specifier = ">=2.0" },
     { name = "markdownify", specifier = ">=0.13" },
-    { name = "mcp", specifier = ">=1.27.1,<2" },
+    { name = "mcp", specifier = ">=1.27.1,<3" },
     { name = "mss", marker = "extra == 'all'", specifier = ">=9.0" },
     { name = "mss", marker = "extra == 'desktop'", specifier = ">=9.0" },
     { name = "octop-browser", specifier = ">=0.9.9" },
     { name = "octop-memory", specifier = ">=0.9.9" },
-    { name = "opensandbox", marker = "extra == 'opensandbox'", specifier = ">=0.1.16,<0.2" },
+    { name = "opensandbox", marker = "extra == 'opensandbox'", specifier = ">=0.1.16,<1.2" },
     { name = "oss2", marker = "extra == 'all'", specifier = ">=2.18" },
     { name = "oss2", marker = "extra == 'object-storage'", specifier = ">=2.18" },
     { name = "pillow", marker = "extra == 'all'", specifier = ">=10.0" },
